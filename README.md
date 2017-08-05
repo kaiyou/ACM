@@ -117,3 +117,63 @@ The plaintext payload is a JSON-encoded string with the following fields:
 
 It is encrypted using AES-GCM.
 
+Security
+========
+
+Trust model
+-----------
+
+The current trust model is based on the following statements:
+ - the client trusts its broker with metadata related to its IP
+   address, application servers and notification count
+ - the client trusts its broker with metadata related to application
+   and notification type of "private" notifications
+ - the client does not trust the broker with the metadata related
+   to application (except the server IP address) and notification type
+   of "confidential" notifications
+ - the client does not trust the broker with the content of notifications
+ - the client does not trust the broker in regard to replay attacks
+ - the client does not trust the borker in regard to DoS attacks
+ - the client does not trust any third party with its notifications
+
+Confidentiality and integrity of notifications
+----------------------------------------------
+
+Notification application and topic remain confidential if using the
+confidential form, and as long as the topic generation process does not
+provide information about either the application or the topic.
+
+Notification final user is confidential to the broker as long as the
+topic generation process does not provide information about the device
+or its owner. Confidentiality can be diminished if the broker can link the
+source IP address to the final user.
+
+Notification content confidentiality and integrity is guaranteed by the
+authenticating encryption scheme, as long as the key is unpredictible by
+the broker or any other third party.
+
+A broker must not provide a list of available topics to any party.
+
+Availability of the service
+---------------------------
+
+Any client can subscribe to new topics on the broker, as well as any
+application server can publish to any topic on the broker. Thus, the
+following limits should be applied:
+
+ - client number of subscriptions should be limited
+ - client rate of subscription/unsubscription should be limited
+ - server publication rate should be limited per topic
+ - server publication rate should be limited in general
+
+Any client can ask its application server to publish to many notification
+targets. Thus, the following limits should be applied:
+
+ - client number of notification targets should be limited
+ - client rate of creation/deletion of notification targets shoul dbe limited
+
+Any server or the broker can spam a client with notifications. Thus, the
+following limits should be applied:
+
+ - notification rate should be limited per topic
+ - notification rate should be limited in general
