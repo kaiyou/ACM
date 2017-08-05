@@ -1,8 +1,7 @@
 This project aims at providing the simplest possible mean to notify mobile
 devices that an interactive application should display a notification and
-load the related contents from its server.
-
-It is primarily targeting Android devices for now.
+load the related contents from its server. It is primarily targeting
+Android devices for now.
 
 The main goals are:
  - lower the battery usage on mobile devices that run messaging apps
@@ -19,9 +18,6 @@ ACM uses WAMP as the underlying protocol. Why? MQTT is tempting but will
 not run in every constrained environment, especially strongly filtered
 networks. WAMP provides the required pubsub APIs over Websockets, which
 are most likely to behave properly in all environments.
-
-ACM uses WSS (Websockets over HTTPS) exclusively, for obvious security
-reasons.
 
 ACM is acentric, meaning a device can register on any ACM server, simply
 by configuring the ACM endpoint. 
@@ -65,7 +61,7 @@ Notifying uses the following scheme.
 Transport and encoding
 ----------------------
 
-WAMP transport used MUST be Websocket.
+WAMP transport used MUST be Websocket over TLS.
 
 WAMP encoding SHOULD be MessagePack for mobile devices.
 
