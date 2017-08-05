@@ -1,3 +1,6 @@
+Agnostic/Acentric Cloud Messaging
+=================================
+
 This project aims at providing the simplest possible mean to notify mobile
 devices that an interactive application should display a notification and
 load the related contents from its server. It is primarily targeting
