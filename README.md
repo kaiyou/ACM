@@ -17,9 +17,9 @@ The main goals are:
 Protocol
 ========
 
-ACM uses a specifically designed protocol described in [](PROTOCOL.md).
-The protocol is available both over a socket-based interface and a REST
-API.
+ACM uses a specifically designed protocol described in
+[PROTOCOL.md](PROTOCOL.md). The protocol is available both over a
+socket-based interface and a REST API.
 
 ACM is acentric, meaning a device can register on any ACM server, simply
 by configuring the ACM endpoint. 
