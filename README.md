@@ -17,10 +17,9 @@ The main goals are:
 Protocol
 ========
 
-ACM uses WAMP as the underlying protocol. Why? MQTT is tempting but will
-not run in every constrained environment, especially strongly filtered
-networks. WAMP provides the required pubsub APIs over Websockets, which
-are most likely to behave properly in all environments.
+ACM uses a specifically designed protocol described in [](PROTOCOL.md).
+The protocol is available both over a socket-based interface and a REST
+API.
 
 ACM is acentric, meaning a device can register on any ACM server, simply
 by configuring the ACM endpoint. 
@@ -34,15 +33,14 @@ on the same WAMP broker.
 
 Subscribing uses the following scheme.
 
-1. The client system package (or application) registers on the WAMP
-   broker
+1. The client notification package connects to a broker (in socket mode)
 2. The app registers a new notification target, specifying the resulting
-   intent and topic type
-3. The system package generates a full topic and stores the relation
-   between the intent type and topic
+   callback and topic type
+3. The system package generates a channel identifier and stores the relation
+   between the intent type and channel
 4. The system package generates an encryption key for the notification
-5. The system package subscribes to the WAMP topic
-6. The application communicates the topic and encryption key to the
+5. The system package subscribes to the channel
+6. The application communicates the broker, channel and encryption key to the
    application server
 
 Notifying uses the following scheme.
@@ -50,75 +48,53 @@ Notifying uses the following scheme.
 1. The application server generates a notification, potentially
    attached with a structured payload
 2. The current timestamp and event unique identifier are attached
-   to the payload, which is then JSON-encoded
+   to the payload, which is encoded
 3. The notification content is encrypted using an authenticated
    encryption scheme and the key initially passed by the client
-4. The notification is published on the notification topic
-5. The client system package decodes and decrypts the notification
-6. The client system package checks the timestamp is recent and stores
+4. The notification is published on the broker and channel specified by the
+   client
+5. The client notification package decodes and decrypts the notification
+6. The client notification package checks the timestamp is recent and stores
    the unique id in a short-lived cache to avoid replay attacks by the
    broker
-7. The client system package generates and sends an intent, including
-   the decoded JSON payload
+7. The client notification package triggers the callback
 
 Transport and encoding
 ----------------------
 
-WAMP transport used MUST be Websocket over TLS.
+If the client is able to use Websockets, a secure Websocket MUST be used
+to connect to the broker.
 
-WAMP encoding SHOULD be MessagePack for mobile devices.
+Otherwise, the client MUST run regular polling using the REST API.
 
-Procedures
-----------
+Channels
+--------
 
-ACM does not use any RPC features from WAMP.
-
-Topics
-------
-
-For every type of notification an app is able to receive, a unique topic
-is generated. The topic MUST be unique to the device, app, and type of
-notification.
-
-During application startup, the application registers the notification
-types associated with expected intents, then the ACM client on the device
-subscribes to the topic.
-
-Topics MUST be of one of the following forms:
-
- - confidential: `acm.<id>`
- - private: `acm.<app>.<type>.<id>`
-
-Confidential form should be used when the application and type of notification
-should remain confidential, even from the notification broker. In that case,
-the broker is completely agnostic of the notification
-
-Private form shoud be used when the application and type of notification
-are not specifically confidential, and the application author expects brokers
-to prioritize notifications based on conventions or contracts.
-
-In both forms, the `id` part is a 256-bits hex string that MUST be unique per
-device, app and notification type, yet can be generated deterministically as
-long as it is not predictible by a third party.
+For every type of notification an application is able to receive, a unique
+channel identifier is generated. The channel identifier MUST be unique to
+the device, application and type of notification.
 
 Notifications
 -------------
 
-A notification is an even published on a notification topic. It contains
-a structured WAMP payload, with the following fields:
+The current and only supported notification format is `1`.
 
- - `version`, containing the protocol version
- - `payload`, containing the encrypted payload as a byte string
+A notification is an event published on a channel. It contains a 16 bytes
+header as follows:
 
-Current protocol version is `1`.
+    0       4       8      12      15
+    --------------------------------
+    |   timestamp   |  identifier  |
+    --------------------------------
 
-The plaintext payload is a JSON-encoded string with the following fields:
+ - `timestamp`, containing the current timestamp since epoch
+ - `identifier`, containing the event identifier, which MUST be unique
+   per channel (e.g. incremental identifier)
 
- - `t`, containing the current timestamp since epoch
- - `id`, containing an event id, unique per topic
- - other fields generated by the application server
+The rest of the notification is the body. Body encoding is delegated to the
+applicatioN.
 
-It is encrypted using AES-GCM.
+The notification encrypted using AES-GCM and the key provided by the client.
 
 Security
 ========
@@ -129,11 +105,8 @@ Trust model
 The current trust model is based on the following statements:
  - the client trusts its broker with metadata related to its IP
    address, application servers and notification count
- - the client trusts its broker with metadata related to application
-   and notification type of "private" notifications
  - the client does not trust the broker with the metadata related
    to application (except the server IP address) and notification type
-   of "confidential" notifications
  - the client does not trust the broker with the content of notifications
  - the client does not trust the broker in regard to replay attacks
  - the client does not trust the borker in regard to DoS attacks
@@ -142,12 +115,12 @@ The current trust model is based on the following statements:
 Confidentiality and integrity of notifications
 ----------------------------------------------
 
-Notification application and topic remain confidential if using the
-confidential form, and as long as the topic generation process does not
-provide information about either the application or the topic.
+Notification application and type remain confidential as long as
+the channel generation process does not provide information about
+either the application or the notification type.
 
 Notification final user is confidential to the broker as long as the
-topic generation process does not provide information about the device
+channel generation process does not provide information about the device
 or its owner. Confidentiality can be diminished if the broker can link the
 source IP address to the final user.
 
@@ -155,28 +128,30 @@ Notification content confidentiality and integrity is guaranteed by the
 authenticating encryption scheme, as long as the key is unpredictible by
 the broker or any other third party.
 
-A broker must not provide a list of available topics to any party.
+A broker MUST NOT provide a list of available topics to any party.
 
 Availability of the service
 ---------------------------
 
-Any client can subscribe to new topics on the broker, as well as any
-application server can publish to any topic on the broker. Thus, the
+Any client can subscribe to new channels on the broker, as well as any
+application server can publish to any channel on the broker. Thus, the
 following limits should be applied:
 
  - client number of subscriptions should be limited
+ - number of subscriptions should be limited per channel
  - client rate of subscription/unsubscription should be limited
- - server publication rate should be limited per topic
+ - server publication rate should be limited per channel
  - server publication rate should be limited in general
 
 Any client can ask its application server to publish to many notification
 targets. Thus, the following limits should be applied:
 
  - client number of notification targets should be limited
- - client rate of creation/deletion of notification targets shoul dbe limited
+ - client rate of creation/deletion of notification targets should be limited
 
 Any server or the broker can spam a client with notifications. Thus, the
 following limits should be applied:
 
- - notification rate should be limited per topic
+ - notification rate should be limited per channel
  - notification rate should be limited in general
+
