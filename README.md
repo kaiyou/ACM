@@ -37,7 +37,7 @@ Subscribing uses the following scheme.
 2. The app registers a new notification target, specifying the resulting
    callback and topic type
 3. The system package generates a channel identifier and stores the relation
-   between the intent type and channel
+   between the callback and channel
 4. The system package generates an encryption key for the notification
 5. The system package subscribes to the channel
 6. The application communicates the broker, channel and encryption key to the
