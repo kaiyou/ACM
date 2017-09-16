@@ -110,6 +110,9 @@ The socket-based protocol is intended to be used over a TLS socket or a
 HTTPS Websocket. It is only used by the client to communicate with the
 broker.
 
+If the socket protocol is exposed over Websocket, it must be available
+at `/ws` and use a single message for each operation.
+
 Connection and initialization
 -----------------------------
 
@@ -188,11 +191,11 @@ The response code MUST be `200`.
 Publish
 -------
 
-Publishing a notification is exposed over `/<id>` using `POST`, where `<id>`
-is replaced with the hex-encoded identifier byte string.
+Publishing a notification is exposed over `/pub` using POST.
 
 The body MUST contain a JSON encoded structure, with the following fields:
 
+* `channel`, the hex-encoded identifier byte string
 * `format`, the notification format as an integer
 * `content`, the notification content
 
@@ -201,19 +204,17 @@ The response code MUST be `200`.
 Poll
 ----
 
-Polling for notifications is exposed over `/` using `GET`.
+Polling for notifications is exposed over `/poll` using `GET`.
 
 The query string MUST contain as many parameters named `id` as channels are
 polled. Every `id` contains the hex-encoded identifier of a polled channel.
-
-Alternatively, a single channel can be polled over `/<id>` using `GET`,
-where `<id>` is replaced with the hex-encoded identifier byte string.
 
 The response code MUST be `200`.
 
 The response body MUST contain a JSON encoded list, with items containing
 the following fields:
 
+* `channel`, the hex-encoded identifier byte string
 * `format`, the notification format as an integer
 * `content`, the notification content
 

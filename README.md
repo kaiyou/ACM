@@ -29,7 +29,7 @@ General scheme
 
 Both the device (or individual applications in case the package is not
 installed system-wide) and application server MUST be able to register
-on the same WAMP broker.
+on the same broker.
 
 Subscribing uses the following scheme.
 
