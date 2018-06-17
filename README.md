@@ -92,9 +92,10 @@ header as follows:
    per channel (e.g. incremental identifier)
 
 The rest of the notification is the body. Body encoding is delegated to the
-applicatioN.
+application.
 
-The notification encrypted using AES-GCM and the key provided by the client.
+The notification us encrypted using AES-GCM and the key provided by the
+client.
 
 Security
 ========

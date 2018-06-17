@@ -72,9 +72,9 @@ symmetric cryptography, with a key kept private by the client.
 Notification
 ------------
 
-A notification is a variable length message sent over a channel. A
-notification Multiple notification formats can coexist, a notification MUST
-have a 16 bits format identifier.
+A notification is a variable length message sent over a channel. Multiple
+notification formats can coexist, a notification MUST have a 16 bits format
+identifier.
 
 A notification MUST have a payload. The payload length MUST be a multiple
 of 16 bytes (128 bits). The payload length MUST NOT exceed 4096 bytes.
